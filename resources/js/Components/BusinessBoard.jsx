@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import axios from "axios";
 import { DndContext, closestCorners } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -257,6 +258,29 @@ const BusinessBoard = () => {
         }
     };
 
+    const onDragEnd = async (result) => {
+        const { source, destination, draggableId } = result;
+        if (!destination) return;
+      
+        if (source.droppableId !== destination.droppableId) {
+          const movedBusiness = businesses.find(b => b.id.toString() === draggableId);
+          const newStateId = parseInt(destination.droppableId, 10);
+          
+          try {
+            await axios.put(`/api/businesses/${draggableId}`, {
+              ...movedBusiness,
+              state_id: newStateId,
+            });
+            setBusinesses(businesses.map(b => 
+              b.id.toString() === draggableId ? { ...b, state_id: newStateId } : b
+            ));
+            toast.success("Business moved successfully!");
+          } catch (error) {
+            toast.error("Error moving business.");
+          }
+        }
+      };
+
     const filteredBusinesses = filteredType
     ? businesses.filter((b) => Number(b.business_type_id) === Number(filteredType))
     : businesses;
@@ -281,7 +305,8 @@ const BusinessBoard = () => {
                 </div>
 
                 {/* Filtro por Tipo de Negócio */}
-                <div className="flex gap-2 bg-gray-800 p-4 rounded-lg shadow-md mt-6">
+                <div className="flex flex-col gap-2 bg-gray-800 p-4 rounded-lg shadow-md mt-6">
+                    <h3 className="text-xl font-semibold text-gray-100">Filter by Business Type</h3>
                     <select
                         value={filteredType || ""}
                         onChange={(e) => setFilteredType(e.target.value || null)}
@@ -335,97 +360,126 @@ const BusinessBoard = () => {
                     </button>
                 </div>                
         
-                <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
-                    <div className="flex gap-4 overflow-x-auto">
-                        {states.map((state) => (
-                            <div key={state.id} className="bg-gray-800 p-4 rounded-lg w-72 min-h-[300px] shadow-lg">
-                                {/* Verificação do estado */}
-                                <div className="flex justify-between items-center">
-                                    <input
-                                        type="text"
-                                        defaultValue={state.name}
-                                        onBlur={(e) => !isRenaming && renameState(state.id, e.target.value, "blur")}
-                                        onKeyDown={(e) => handleRenameKeyPress(e, state.id, e.target.value)}
-                                        className="text-lg font-bold text-gray-100 bg-transparent border-none outline-none w-full"
-                                    />
-                                    <button onClick={() => confirmDeleteState(state.id)} className="text-red-500">
-                                        <Trash size={16} />
-                                    </button>
-                                </div>
-        
-                                {/* Form to Create Business */}
-                                <div className="mt-4">
-                                    <input
-                                        type="text"
-                                        placeholder="Business Name"
-                                        value={newBusiness[state.id]?.name || ""}
-                                        onChange={(e) => handleInputChange(state.id, "name", e.target.value)}
-                                        className="p-2 rounded bg-gray-700 text-gray-200 w-full mb-2"
-                                    />
-                                    <select
-                                        value={newBusiness[state.id]?.business_type_id || ""}
-                                        onChange={(e) => handleInputChange(state.id, "business_type_id", e.target.value)}
-                                        className="p-2 rounded bg-gray-700 text-gray-200 w-full mb-2"
-                                    >
-                                        <option value="">Select Business Type</option>
-                                        {businessTypes.map((type) => (
-                                            <option key={type.id} value={type.id}>
-                                                {type.name}
-                                            </option>
-                                        ))}
-                                    </select>
-        
-                                    <input
-                                        type="number"
-                                        value={newBusiness[state.id]?.value || ""}
-                                        onChange={(e) => handleInputChange(state.id, "value", e.target.value)}
-                                        placeholder="Business Value (€)"
-                                        className="p-2 rounded bg-gray-700 text-gray-200 w-full mb-2"
-                                    />
-        
-                                    <select
-                                        value={newBusiness[state.id]?.user_id || ""}
-                                        onChange={(e) => handleInputChange(state.id, "user_id", e.target.value)}
-                                        className="p-2 rounded bg-gray-700 text-gray-200 w-full mb-2"
-                                    >
-                                        <option value="">Select User</option>
-                                        {users.map((user) => (
-                                            <option key={user.id} value={user.id}>
-                                                {user.name}
-                                            </option>
-                                        ))}
-                                    </select>
-        
-                                    <button
-                                        onClick={() => handleCreateBusiness(state.id)}
-                                        className="bg-blue-500 text-white px-4 py-2 rounded w-full mb-2"
-                                    >
-                                        Create Business
-                                    </button>
-                                </div>
-        
-                                {/* List of Businesses in this state */}
-                                <SortableContext
-                                    items={filteredBusinesses.filter((b) => b.state_id === state.id).map((b) => b.id)}
-                                    strategy={verticalListSortingStrategy}
-                                >
-                                    {filteredBusinesses
-                                        .filter((b) => b.state_id === state.id)
-                                        .map((business) => (
-                                            <BusinessCard
-                                                key={business.id}
-                                                business={business}
-                                                businessTypes={businessTypes}
-                                                users={users}
-                                                onEdit={handleEditBusiness}
-                                                onDelete={handleDeleteBusiness}
-                                            />
-                                        ))}
-                                </SortableContext>
+                <DragDropContext onDragEnd={onDragEnd}>
+                <div className="flex gap-4 overflow-x-auto">
+                    {states.map((state) => (
+                    <Droppable key={state.id} droppableId={state.id.toString()}>
+                        {(provided) => (
+                        <div
+                            ref={provided.innerRef}
+                            {...provided.droppableProps}
+                            className="bg-gray-800 p-4 rounded-lg w-72 min-h-[300px] shadow-lg"
+                        >
+                            {/* Cabeçalho do Estado */}
+                            <div className="flex justify-between items-center">
+                            <input
+                                type="text"
+                                defaultValue={state.name}
+                                onBlur={(e) =>
+                                !isRenaming && renameState(state.id, e.target.value, "blur")
+                                }
+                                onKeyDown={(e) =>
+                                handleRenameKeyPress(e, state.id, e.target.value)
+                                }
+                                className="text-lg font-bold text-gray-100 bg-transparent border-none outline-none w-full"
+                            />
+                            <button
+                                onClick={() => confirmDeleteState(state.id)}
+                                className="text-red-500"
+                            >
+                                <Trash size={16} />
+                            </button>
                             </div>
-                        ))}
-                    </div>
-                </DndContext>
+
+                            {/* Formulário para criação de Business */}
+                            <div className="mt-4">
+                            <input
+                                type="text"
+                                placeholder="Business Name"
+                                value={newBusiness[state.id]?.name || ""}
+                                onChange={(e) =>
+                                handleInputChange(state.id, "name", e.target.value)
+                                }
+                                className="p-2 rounded bg-gray-700 text-gray-200 w-full mb-2"
+                            />
+                            <select
+                                value={newBusiness[state.id]?.business_type_id || ""}
+                                onChange={(e) =>
+                                handleInputChange(state.id, "business_type_id", e.target.value)
+                                }
+                                className="p-2 rounded bg-gray-700 text-gray-200 w-full mb-2"
+                            >
+                                <option value="">Select Business Type</option>
+                                {businessTypes.map((type) => (
+                                <option key={type.id} value={type.id}>
+                                    {type.name}
+                                </option>
+                                ))}
+                            </select>
+                            <input
+                                type="number"
+                                value={newBusiness[state.id]?.value || ""}
+                                onChange={(e) =>
+                                handleInputChange(state.id, "value", e.target.value)
+                                }
+                                placeholder="Business Value (€)"
+                                className="p-2 rounded bg-gray-700 text-gray-200 w-full mb-2"
+                            />
+                            <select
+                                value={newBusiness[state.id]?.user_id || ""}
+                                onChange={(e) =>
+                                handleInputChange(state.id, "user_id", e.target.value)
+                                }
+                                className="p-2 rounded bg-gray-700 text-gray-200 w-full mb-2"
+                            >
+                                <option value="">Select User</option>
+                                {users.map((user) => (
+                                <option key={user.id} value={user.id}>
+                                    {user.name}
+                                </option>
+                                ))}
+                            </select>
+                            <button
+                                onClick={() => handleCreateBusiness(state.id)}
+                                className="bg-blue-500 text-white px-4 py-2 rounded w-full mb-2"
+                            >
+                                Create Business
+                            </button>
+                            </div>
+
+                            {/* Lista de Business Cards */}
+                            {filteredBusinesses
+                            .filter((b) => b.state_id === state.id)
+                            .map((business, index) => (
+                                <Draggable
+                                key={business.id}
+                                draggableId={business.id.toString()}
+                                index={index}
+                                >
+                                {(provided) => (
+                                    <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    >
+                                    <BusinessCard
+                                        business={business}
+                                        businessTypes={businessTypes}
+                                        users={users}
+                                        onEdit={handleEditBusiness}
+                                        onDelete={handleDeleteBusiness}
+                                    />
+                                    </div>
+                                )}
+                                </Draggable>
+                            ))}
+                            {provided.placeholder}
+                        </div>
+                        )}
+                    </Droppable>
+                    ))}
+                </div>
+                </DragDropContext>
         
                 {/* Confirmation Modal for Deleting State */}
                 {stateToDelete && (

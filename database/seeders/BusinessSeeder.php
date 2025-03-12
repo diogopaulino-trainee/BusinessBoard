@@ -24,7 +24,7 @@ class BusinessSeeder extends Seeder
             return;
         }
 
-        foreach (range(1, 5) as $index) {
+        foreach (range(1, 20) as $index) {
             $randomUser = $users->random();
 
             Business::create([
