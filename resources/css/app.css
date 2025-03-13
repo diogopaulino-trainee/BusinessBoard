@@ -85,16 +85,6 @@
   background-color: #718096;
 }
 
-.scrollbar-top {
-  transform: rotate(180deg);
-  direction: rtl;
-}
-
-.scrollbar-top > * {
-  transform: rotate(180deg);
-  direction: ltr;
-}
-
 .scrollbar-top::-webkit-scrollbar {
   width: 12px;
   height: 12px;
