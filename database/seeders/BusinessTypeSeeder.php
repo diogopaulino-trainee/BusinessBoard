@@ -15,7 +15,12 @@ class BusinessTypeSeeder extends Seeder
             'Retail',
             'Finance',
             'Healthcare',
-            'Education'
+            'Education',
+            'Marketing',
+            'Automotive',
+            'Hospitality',
+            'Manufacturing',
+            'Real Estate'
         ];
 
         foreach ($businessTypes as $type) {

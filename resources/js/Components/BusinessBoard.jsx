@@ -18,12 +18,11 @@ import React, { useEffect, useState } from "react";
  *         import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
  *
  *    A API é praticamente a mesma, então a migração costuma ser simples.
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
  */
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import axios from "axios";
 import BusinessCard from "../Components/BusinessCard";
-import { MoveRight, Filter, DollarSign, Users, Briefcase, Trash, Plus } from "lucide-react";
+import { MoveRight, DollarSign, Users, Trash, Plus } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -276,11 +275,11 @@ const BusinessBoard = () => {
     
         try {
             const response = await axios.post("/api/users", newUser);
-            toast.success("User created successfully!");
+            toast.success("Sales Representative created successfully!");
             setUsers([...users, response.data]);
             setNewUser({ name: "", email: "" });
         } catch (error) {
-            toast.error("Error creating user.");
+            toast.error("Error creating Sales Representative.");
         }
     };
 
@@ -355,206 +354,238 @@ const BusinessBoard = () => {
                 </select>
             </div>
 
-            {/* Create State */}
-            <div className="flex gap-2 bg-gray-800 p-4 rounded-lg shadow-md">
-                <input
-                type="text"
-                placeholder="New State Name"
-                value={newStateName}
-                onChange={(e) => setNewStateName(e.target.value)}
-                onKeyDown={handleCreateKeyPress}
-                className="p-2 rounded bg-gray-700 text-gray-200 w-full h-12"
-                />
-                <button onClick={createState} className="bg-blue-500 px-4 py-2 rounded text-white flex items-center h-12">
-                <Plus size={16} className="mr-2" /> Add
-                </button>
-            </div>
-
             {/* Create User */}
-            <div className="flex gap-2 bg-gray-800 p-4 rounded-lg shadow-md mt-6">
-                <input
-                type="text"
-                placeholder="User Name"
-                value={newUser.name}
-                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                className="p-2 rounded bg-gray-700 text-gray-200 w-full h-12"
-                />
-                <input
-                type="email"
-                placeholder="User Email"
-                value={newUser.email}
-                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                className="p-2 rounded bg-gray-700 text-gray-200 w-full h-12"
-                />
-                <button
-                onClick={createUser}
-                className="bg-green-500 px-4 py-2 rounded text-white flex items-center h-12 whitespace-nowrap"
-                >
-                <Plus size={16} className="mr-2" /> Add User
-                </button>
+            <div className="bg-gray-800 p-4 rounded-lg shadow-md mt-6">
+                <h3 className="text-xl font-semibold text-gray-100 mb-2">Create Sales Representative</h3>
+                <div className="flex gap-2">
+                    <input
+                    type="text"
+                    placeholder="Sales Representative Name"
+                    value={newUser.name}
+                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                    className="p-2 rounded bg-gray-700 text-gray-200 w-full h-12"
+                    />
+                    <input
+                    type="email"
+                    placeholder="Sales Representative Email"
+                    value={newUser.email}
+                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                    className="p-2 rounded bg-gray-700 text-gray-200 w-full h-12"
+                    />
+                    <button
+                    onClick={createUser}
+                    className="bg-green-500 px-4 py-2 rounded text-white flex items-center h-12 whitespace-nowrap"
+                    >
+                    <Plus size={16} className="mr-2" /> Add Sales Representative
+                    </button>
+                </div>
             </div>
 
-            <DragDropContext onDragEnd={onDragEnd}>
-                <div className="flex gap-4 overflow-x-auto">
+            {/* Create State */}
+            <div className="bg-gray-800 p-4 rounded-lg shadow-md mt-6">
+                <h3 className="text-xl font-semibold text-gray-100 mb-2">Create State</h3>
+                <div className="flex gap-2">
+                    <input
+                    type="text"
+                    placeholder="New State Name"
+                    value={newStateName}
+                    onChange={(e) => setNewStateName(e.target.value)}
+                    onKeyDown={handleCreateKeyPress}
+                    className="p-2 rounded bg-gray-700 text-gray-200 w-full h-12"
+                    />
+                    <button
+                    onClick={createState}
+                    className="bg-blue-500 px-4 py-2 rounded text-white flex items-center h-12 whitespace-nowrap"
+                    >
+                    <Plus size={16} className="mr-2" /> Add State
+                    </button>
+                </div>
+            </div>
+
+            <div className="bg-gray-900 text-gray-100 min-h-screen">
+                <h3 className="text-2xl font-bold mb-4">Our Businesses</h3>
+
+                <DragDropContext onDragEnd={onDragEnd}>
+                    <div className="flex gap-4 overflow-x-auto scrollbar-top py-2">
                     {states.map((state) => (
-                    <Droppable key={state.id} droppableId={state.id.toString()}>
+                        <Droppable key={state.id} droppableId={state.id.toString()}>
                         {(provided) => {
-                        // Filtra os negócios deste estado
-                        const stateBusinesses = filteredBusinesses.filter(
+                            const stateBusinesses = filteredBusinesses.filter(
                             (b) => b.state_id === state.id
-                        );
-                        // Calcula o total de negócios e a soma dos valores
-                        const totalCount = stateBusinesses.length;
-                        const totalValue = stateBusinesses
+                            );
+                            const totalCount = stateBusinesses.length;
+                            const totalValue = stateBusinesses
                             .reduce((sum, b) => sum + parseFloat(b.value), 0)
                             .toFixed(2);
 
-                        return (
+                            return (
                             <div
-                            ref={provided.innerRef}
-                            {...provided.droppableProps}
-                            className="bg-gray-800 p-4 rounded-lg w-72 min-h-[300px] shadow-lg"
+                                ref={provided.innerRef}
+                                {...provided.droppableProps}
+                                className="
+                                bg-gray-800 p-4 rounded-lg
+                                min-w-[250px]
+                                sm:min-w-[280px]
+                                sm:w-72
+                                min-h-[300px] 
+                                max-h-[900px] 
+                                overflow-y-auto 
+                                scrollbar-custom 
+                                shadow-lg 
+                                "
                             >
-                            {/* Cabeçalho do Estado */}
-                            <div className="flex justify-between items-center">
+                                {/* Cabeçalho do Estado */}
+                                <div className="flex justify-between items-center">
                                 <input
-                                type="text"
-                                defaultValue={state.name}
-                                onBlur={(e) =>
+                                    type="text"
+                                    defaultValue={state.name}
+                                    onBlur={(e) =>
                                     !isRenaming && renameState(state.id, e.target.value, "blur")
-                                }
-                                onKeyDown={(e) => handleRenameKeyPress(e, state.id, e.target.value)}
-                                className="text-lg font-bold text-gray-100 bg-transparent border-none outline-none w-full"
+                                    }
+                                    onKeyDown={(e) =>
+                                    handleRenameKeyPress(e, state.id, e.target.value)
+                                    }
+                                    className="text-lg font-bold text-gray-100 bg-transparent border-none outline-none w-full"
                                 />
-                                <button onClick={() => confirmDeleteState(state.id)} className="text-red-500">
-                                <Trash size={16} />
-                                </button>
-                            </div>
-
-                            {/* Totalizadores do Estado */}
-                            <div className="mt-2 flex justify-between text-sm">
-                                <p className="text-gray-300 flex items-center gap-1">
-                                <Users size={14} className="text-green-400" /> {totalCount}
-                                </p>
-                                <p className="text-gray-300 flex items-center gap-1">
-                                <DollarSign size={14} className="text-yellow-400" /> €{totalValue}
-                                </p>
-                            </div>
-
-                            {/* Lista de Business Cards */}
-                            {stateBusinesses.map((business, index) => (
-                                <Draggable
-                                key={business.id}
-                                draggableId={business.id.toString()}
-                                index={index}
+                                <button
+                                    onClick={() => confirmDeleteState(state.id)}
+                                    className="text-red-500"
                                 >
-                                {(provided) => (
+                                    <Trash size={16} />
+                                </button>
+                                </div>
+
+                                {/* Totalizadores do Estado */}
+                                <div className="mt-2 flex justify-between font-bold">
+                                <p className="text-gray-300 flex items-center gap-1">
+                                    <Users size={18} className="text-green-400" /> {totalCount}
+                                </p>
+                                <p className="text-gray-300 flex items-center gap-1">
+                                    <DollarSign size={18} className="text-yellow-400" /> €{totalValue}
+                                </p>
+                                </div>
+
+                                {/* Lista de Business Cards */}
+                                {stateBusinesses.map((business, index) => (
+                                <Draggable
+                                    key={business.id}
+                                    draggableId={business.id.toString()}
+                                    index={index}
+                                >
+                                    {(provided) => (
                                     <div
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    {...provided.dragHandleProps}
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        {...provided.dragHandleProps}
                                     >
-                                    <BusinessCard
+                                        <BusinessCard
                                         business={business}
                                         businessTypes={businessTypes}
                                         users={users}
                                         onEdit={handleEditBusiness}
                                         onDelete={handleDeleteBusiness}
-                                    />
+                                        />
                                     </div>
-                                )}
+                                    )}
                                 </Draggable>
-                            ))}
-                            {provided.placeholder}
+                                ))}
+                                {provided.placeholder}
 
-                            {/* Card para adicionar novo Business */}
-                            {newBusinessForms[state.id] ? (
+                                {/* Card para adicionar novo Business */}
+                                {newBusinessForms[state.id] ? (
                                 <div className="mt-4">
-                                <input
+                                    <input
                                     type="text"
                                     placeholder="Business Name"
                                     value={newBusiness[state.id]?.name || ""}
                                     onChange={(e) => handleInputChange(state.id, "name", e.target.value)}
                                     className="p-2 rounded bg-gray-700 text-gray-200 w-full mb-2"
-                                />
-                                <select
+                                    />
+                                    <select
                                     value={newBusiness[state.id]?.business_type_id || ""}
                                     onChange={(e) =>
-                                    handleInputChange(state.id, "business_type_id", e.target.value)
+                                        handleInputChange(state.id, "business_type_id", e.target.value)
                                     }
                                     className="p-2 rounded bg-gray-700 text-gray-200 w-full mb-2"
-                                >
+                                    >
                                     <option value="">Select Business Type</option>
                                     {businessTypes.map((type) => (
-                                    <option key={type.id} value={type.id}>
+                                        <option key={type.id} value={type.id}>
                                         {type.name}
-                                    </option>
+                                        </option>
                                     ))}
-                                </select>
-                                <input
+                                    </select>
+                                    <input
                                     type="number"
                                     value={newBusiness[state.id]?.value || ""}
                                     onChange={(e) => handleInputChange(state.id, "value", e.target.value)}
                                     placeholder="Business Value (€)"
                                     className="p-2 rounded bg-gray-700 text-gray-200 w-full mb-2"
-                                />
-                                <select
+                                    />
+                                    <select
                                     value={newBusiness[state.id]?.user_id || ""}
                                     onChange={(e) =>
-                                    handleInputChange(state.id, "user_id", e.target.value)
+                                        handleInputChange(state.id, "user_id", e.target.value)
                                     }
                                     className="p-2 rounded bg-gray-700 text-gray-200 w-full mb-2"
-                                >
-                                    <option value="">Select User</option>
+                                    >
+                                    <option value="">Select Sales Representative</option>
                                     {users.map((user) => (
-                                    <option key={user.id} value={user.id}>
+                                        <option key={user.id} value={user.id}>
                                         {user.name}
-                                    </option>
+                                        </option>
                                     ))}
-                                </select>
-                                <button
+                                    </select>
+                                    <button
                                     onClick={() => handleCreateBusiness(state.id)}
                                     className="bg-blue-500 text-white px-4 py-2 rounded w-full mb-2"
-                                >
+                                    >
                                     Create Business
-                                </button>
+                                    </button>
                                 </div>
-                            ) : (
+                                ) : (
                                 <div
-                                className="p-4 bg-gray-700 rounded cursor-pointer mt-2"
-                                onClick={() => handleAddBusiness(state.id)}
+                                    className="p-4 bg-gray-700 rounded cursor-pointer mt-2"
+                                    onClick={() => handleAddBusiness(state.id)}
                                 >
-                                <div className="flex items-center justify-center text-gray-200">
+                                    <div className="flex items-center justify-center text-gray-200">
                                     <Plus size={16} className="mr-2" /> Add Business
+                                    </div>
                                 </div>
-                                </div>
-                            )}
+                                )}
                             </div>
-                        );
+                            );
                         }}
-                    </Droppable>
+                        </Droppable>
                     ))}
-                </div>
+                    </div>
                 </DragDropContext>
 
-            {/* Confirmation Modal for Deleting State */}
-            {stateToDelete && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                <div className="bg-gray-800 p-6 rounded-lg shadow-lg text-white">
-                    <h2 className="text-lg font-bold">Confirm Deletion</h2>
-                    <p>Are you sure you want to delete this state?</p>
-                    <div className="mt-4 flex justify-end gap-4">
-                    <button className="px-4 py-2 bg-gray-600 rounded" onClick={() => setStateToDelete(null)}>
-                        Cancel
-                    </button>
-                    <button className="px-4 py-2 bg-red-500 rounded" onClick={deleteState}>
-                        Delete
-                    </button>
+                {/* Confirmation Modal for Deleting State */}
+                {stateToDelete && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="bg-gray-800 p-6 rounded-lg shadow-lg text-white">
+                        <h2 className="text-lg font-bold">Confirm Deletion</h2>
+                        <p>Are you sure you want to delete this state?</p>
+                        <div className="mt-4 flex justify-end gap-4">
+                        <button
+                            className="px-4 py-2 bg-gray-600 rounded"
+                            onClick={() => setStateToDelete(null)}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            className="px-4 py-2 bg-red-500 rounded"
+                            onClick={deleteState}
+                        >
+                            Delete
+                        </button>
+                        </div>
                     </div>
+                    </div>
+                )}
                 </div>
-                </div>
-            )}
-        </div>
+            </div>
     );
 };
 

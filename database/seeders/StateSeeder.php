@@ -11,10 +11,15 @@ class StateSeeder extends Seeder
     public function run(): void
     {
         $states = [
-            'New', 
-            'In Negotiation', 
-            'Pending Approval', 
-            'Approved', 
+            'New',
+            'In Negotiation',
+            'Under Review',
+            'Pending Approval',
+            'Approved',
+            'On Hold',
+            'In Revision',
+            'Rejected',
+            'Canceled',
             'Closed'
         ];
 
