@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\WelcomeMail;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
@@ -25,6 +27,8 @@ class UserController extends Controller
             'email' => $validatedData['email'],
             'password' => bcrypt('password'),
         ]);
+
+        Mail::to($user->email)->send(new WelcomeMail($user));
 
         return response()->json($user, 201);
     }
