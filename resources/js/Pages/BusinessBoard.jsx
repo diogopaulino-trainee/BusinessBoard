@@ -22,7 +22,7 @@ import React, { useEffect, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import axios from "axios";
 import BusinessCard from "../Components/BusinessCard";
-import { MoveRight, DollarSign, Users, Trash, Plus } from "lucide-react";
+import { MoveRight, DollarSign, Users, Trash, Plus, Award } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -275,6 +275,15 @@ const BusinessBoard = () => {
     ? businesses.filter((b) => Number(b.business_type_id) === Number(filteredType))
     : businesses;
 
+    const totalValue = filteredBusinesses.reduce((sum, b) => sum + parseFloat(b.value), 0);
+    const averageBusinessValue = filteredBusinesses.length > 0 ? (totalValue / filteredBusinesses.length).toFixed(2) : "0.00";
+
+    const stateCounts = states.map(state => ({
+        name: state.name,
+        count: filteredBusinesses.filter(b => b.state_id === state.id).length
+    }));
+    const mostPopularState = stateCounts.length > 0 ? stateCounts.reduce((max, state) => (state.count > max.count ? state : max), stateCounts[0]) : null;
+
     return (
         <div className="p-6 space-y-6 bg-gray-900 min-h-screen text-gray-100">
             <ToastContainer position="top-right" autoClose={3000} />
@@ -282,16 +291,26 @@ const BusinessBoard = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-center bg-gray-800 p-6 rounded-lg shadow-lg">
                 <h1 className="text-2xl font-bold flex items-center gap-2">
-                <MoveRight size={28} className="text-blue-400" /> Business Board
+                    <MoveRight size={28} className="text-blue-400" /> Business Board
                 </h1>
-                <div className="flex flex-col md:flex-row items-center gap-4">
-                <p className="flex items-center gap-2 text-lg">
-                    <Users size={20} className="text-green-400" /> Total: {filteredBusinesses.length} businesses
-                </p>
-                <p className="flex items-center gap-2 text-lg">
-                    <DollarSign size={20} className="text-yellow-400" /> Revenue: €
-                    {filteredBusinesses.reduce((sum, b) => sum + parseFloat(b.value), 0).toFixed(2)}
-                </p>
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                    <p className="flex items-center gap-2 text-lg">
+                        <Users size={20} className="text-green-400" /> Total: {filteredBusinesses.length} businesses
+                    </p>
+                    <p className="flex items-center gap-2 text-lg">
+                        <DollarSign size={20} className="text-yellow-400" /> Revenue: €{totalValue.toFixed(2)}
+                    </p>
+                    <p className="flex items-center gap-2 text-lg">
+                        <DollarSign size={20} className="text-blue-400" /> Avg Business Value: €{averageBusinessValue}
+                    </p>
+                    {mostPopularState && (
+                        <p className="flex items-center gap-2 text-lg">
+                            <Award  size={20} className="text-purple-400" /> Most Businesses: {mostPopularState.name} ({mostPopularState.count})
+                        </p>
+                    )}
+                    <p className="flex items-center gap-2 text-lg">
+                        <Users size={20} className="text-cyan-400" /> Sales Representatives: {users.length}
+                    </p>
                 </div>
             </div>
 
@@ -375,6 +394,10 @@ const BusinessBoard = () => {
                             const totalValue = stateBusinesses
                             .reduce((sum, b) => sum + parseFloat(b.value), 0)
                             .toFixed(2);
+                            const averageValue = totalCount > 0 ? (totalValue / totalCount).toFixed(2) : "0.00";
+                            const percentageOfTotal = filteredBusinesses.length > 0
+                                ? ((totalCount / filteredBusinesses.length) * 100).toFixed(2)
+                                : "0.00";
 
                             return (
                             <div
@@ -414,13 +437,17 @@ const BusinessBoard = () => {
                                 </div>
 
                                 {/* Totalizadores do Estado */}
-                                <div className="mt-2 flex justify-between font-bold">
-                                <p className="text-gray-300 flex items-center gap-1">
-                                    <Users size={18} className="text-green-400" /> {totalCount}
-                                </p>
-                                <p className="text-gray-300 flex items-center gap-1">
-                                    <DollarSign size={18} className="text-yellow-400" /> €{totalValue}
-                                </p>
+                                <div className="mt-2 flex flex-col font-bold text-gray-300">
+                                    <p className="flex items-center gap-1">
+                                        <Users size={18} className="text-green-400" />
+                                        {totalCount} businesses ({percentageOfTotal}%)
+                                    </p>
+                                    <p className="flex items-center gap-1">
+                                        <DollarSign size={18} className="text-yellow-400" /> €{totalValue} total
+                                    </p>
+                                    <p className="flex items-center gap-1">
+                                        <DollarSign size={18} className="text-blue-400" /> Avg: €{averageValue}
+                                    </p>
                                 </div>
 
                                 {/* Lista de Business Cards */}
