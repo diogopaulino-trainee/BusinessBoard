@@ -192,7 +192,6 @@ const BusinessBoard = () => {
 
     const handleEditBusiness = async (id, updatedBusiness) => {
         try {
-            const response = await axios.put(`/api/businesses/${id}`, updatedBusiness);
     
             setBusinesses((prevBusinesses) => {
                 return prevBusinesses.map((business) =>
@@ -218,47 +217,6 @@ const BusinessBoard = () => {
             toast.success("Business deleted successfully!");
         } catch (error) {
             toast.error("Error deleting business.");
-        }
-    };
-
-    const handleDragEnd = async (event) => {
-        const { active, over } = event;
-        console.log("Active item:", active);
-        console.log("Over item:", over);
-
-        if (!over || active.id === over.id) {
-            console.log("Drag ended without movement.");
-            return;
-        }
-    
-        const movedBusiness = businesses.find((b) => b.id === active.id);
-        const targetState = states.find((state) => state.id === over.id);
-    
-        console.log("Moved business:", movedBusiness);
-        console.log("Target state:", targetState);
-    
-        if (movedBusiness && targetState) {
-            try {
-                const response = await axios.put(`/api/businesses/${active.id}`, {
-                    state_id: targetState.id,
-                    name: movedBusiness.name,
-                    value: movedBusiness.value,
-                    business_type_id: movedBusiness.business_type_id,
-                    user_id: movedBusiness.user_id,
-                });
-    
-                setBusinesses((prev) =>
-                    prev.map((b) =>
-                        b.id === active.id ? { ...b, state_id: targetState.id } : b
-                    )
-                );
-    
-                toast.success("Business moved successfully!");
-            } catch (error) {
-                toast.error("Error moving business.");
-            }
-        } else {
-            console.log("No business or state found for move.");
         }
     };
 
