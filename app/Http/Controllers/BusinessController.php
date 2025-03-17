@@ -14,7 +14,6 @@ class BusinessController extends Controller
     public function index()
     {
         $businesses = Business::with(['businessType', 'user', 'state'])->get();
-        Log::info('Businesses loaded:', $businesses->toArray());
         return response()->json($businesses);
     }
 
@@ -37,8 +36,6 @@ class BusinessController extends Controller
 
     public function update(Request $request, Business $business)
     {
-        Log::info('Dados recebidos para atualização:', $request->all());
-
         $validated = $request->validate([
             'state_id' => 'required|exists:states,id',
             'name' => 'nullable|string|max:255',

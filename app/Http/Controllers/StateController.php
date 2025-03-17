@@ -49,7 +49,6 @@ class StateController extends Controller
 
     public function destroy(State $state)
     {
-        // Before deleting, check if there are businesses linked to this state
         if ($state->businesses()->count() > 0) {
             return response()->json([
                 'error' => 'You cannot delete a state that has businesses associated with it.'
