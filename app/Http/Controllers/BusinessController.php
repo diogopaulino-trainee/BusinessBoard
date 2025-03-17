@@ -49,7 +49,7 @@ class BusinessController extends Controller
 
         $business->update($validated);
 
-        return response()->json($business);
+        return response()->json($business->load('businessType', 'user', 'state'));
     }
 
     public function destroy(Business $business)

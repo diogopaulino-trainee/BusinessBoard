@@ -20,13 +20,19 @@ import React, { useEffect, useState } from "react";
  *    A API é praticamente a mesma, então a migração costuma ser simples.
  */
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import axios from "axios";
+import { fetchData, createState, renameState, confirmDeleteState, deleteState, createBusiness, editBusiness, deleteBusiness, createUser, moveBusiness} from "../services/apiService";
+import Header from "../Components/Header";
+import FilterByBusinessType from "../Components/FilterByBusinessType";
+import CreateUserForm from "../Components/CreateUserForm";
+import CreateStateForm from "../Components/CreateStateForm";
 import BusinessCard from "../Components/BusinessCard";
-import { MoveRight, DollarSign, Users, Trash, Plus, Award } from "lucide-react";
-import { toast, ToastContainer } from "react-toastify";
+import { DollarSign, Users, Trash, Plus } from "lucide-react";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+// Componente principal da tela de "Business Board"
 const BusinessBoard = () => {
+    // State local para gerenciar dados
     const [businesses, setBusinesses] = useState([]);
     const [states, setStates] = useState([]);
     const [filteredType, setFilteredType] = useState(null);
@@ -38,111 +44,23 @@ const BusinessBoard = () => {
     const [users, setUsers] = useState([]);
     const [newBusinessForms, setNewBusinessForms] = useState({});
 
+    // useEffect para carregar dados na inicialização
     useEffect(() => {
-        fetchData();
+        fetchData(setBusinesses, setStates, setBusinessTypes, setUsers);
     }, []);
-
-    const fetchData = async () => {
-        try {
-            const [businessRes, stateRes, typeRes, userRes] = await Promise.all([
-                axios.get("/api/businesses"),
-                axios.get("/api/states"),
-                axios.get("/api/business-types"),
-                axios.get("/api/users"),
-            ]);
-            
-            // console.log("Business Data:", businessRes.data);
-            // console.log("State Data:", stateRes.data);
-            // console.log("Business Type Data:", typeRes.data);
-            // console.log("User Data:", userRes.data);
-            
-            setBusinesses(businessRes.data);
-            setStates(stateRes.data);
-            setBusinessTypes(typeRes.data);
-            setUsers(userRes.data);
-        } catch (error) {
-            console.error("Error fetching data:", error);
-            toast.error("Error loading data.");
-        }
-    };
-
-    const createState = async () => {
-        if (!newStateName.trim()) return;
-        try {
-            const response = await axios.post("/api/states", { name: newStateName });
-    
-            if (response.data && response.data.state) {
-                setStates([...states, response.data.state]);
-                toast.success("State created successfully!");
-            } else {
-                fetchData();
-            }
-    
-            setNewStateName("");
-        } catch (error) {
-            if (error.response?.data?.message) {
-                toast.error(error.response.data.message);
-            } else {
-                toast.error("Error creating state.");
-            }
-        }
-    };
 
     const handleCreateKeyPress = (event) => {
         if (event.key === "Enter") {
-            createState();
+            createState(newStateName, setStates, states, setNewStateName);
         }
-    };
-    
-    const renameState = async (id, newName, eventType) => {
-        if (!newName.trim()) return;
-    
-        const currentState = states.find(state => state.id === id);
-        if (!currentState || currentState.name === newName) {
-            if (eventType === "enter") {
-                toast.info("No changes were made. The state name remains the same.");
-            }
-            return;
-        }
-    
-        if (isRenaming) return;
-        setIsRenaming(true);
-    
-        try {
-            const response = await axios.put(`/api/states/${id}`, { name: newName });
-    
-            setStates(states.map(state => (state.id === id ? { ...state, name: newName } : state)));
-    
-            toast.success(response.data.message || "State name updated!");
-        } catch (error) {
-            toast.error("Error updating state.");
-        }
-    
-        setTimeout(() => setIsRenaming(false), 100);
     };
     
     const handleRenameKeyPress = (event, id, newName) => {
         if (event.key === "Enter") {
             event.preventDefault();
-            renameState(id, newName, "enter");
+            renameState(id, newName, states, setStates, setIsRenaming);
             setTimeout(() => event.target.blur(), 50);
         }
-    };
-
-    const confirmDeleteState = (id) => {
-        setStateToDelete(id);
-    };
-
-    const deleteState = async () => {
-        if (!stateToDelete) return;
-        try {
-            await axios.delete(`/api/states/${stateToDelete}`);
-            setStates(states.filter((state) => state.id !== stateToDelete));
-            toast.success("State deleted successfully!");
-        } catch (error) {
-            toast.error(error.response?.data?.error || "Error deleting state.");
-        }
-        setStateToDelete(null);
     };
 
     const handleInputChange = (stateId, field, value) => {
@@ -155,69 +73,16 @@ const BusinessBoard = () => {
         });
     };
     
-    const handleCreateBusiness = async (stateId) => {
-        const currentBusiness = newBusiness[stateId];
-        console.log("Data being sent:", currentBusiness);
-      
-        // Verifica se o objeto e campos obrigatórios existem
-        if (
-          !currentBusiness ||
-          !currentBusiness.name?.trim() ||
-          !currentBusiness.value ||
-          !currentBusiness.business_type_id
-        ) {
-          toast.error("Please fill out all fields.");
-          return;
-        }
-      
-        try {
-          const response = await axios.post("/api/businesses", {
-            ...currentBusiness,
-            state_id: stateId,
-          });
-      
-          console.log("Response data:", response.data);
-      
-          setBusinesses([...businesses, response.data]);
-          toast.success("Business created successfully!");
-      
-          setNewBusiness((prev) => ({
-            ...prev,
-            [stateId]: { name: "", business_type_id: "", value: "" },
-          }));
-        } catch (error) {
-          toast.error("Error creating business.");
-        }
-    };
-
-    const handleEditBusiness = async (id, updatedBusiness) => {
-        try {
-    
-            setBusinesses((prevBusinesses) => {
-                return prevBusinesses.map((business) =>
-                    business.id === id ? { ...business, ...updatedBusiness } : business
-                );
-            });
-    
-            toast.success("Business updated successfully! The page will refresh shortly.");
-    
-            setTimeout(() => {
-                window.location.reload();
-            }, 3000);
-    
-        } catch (error) {
-            toast.error("Error updating business.");
-        }
+    const handleCreateBusiness = (stateId) => {
+        createBusiness(stateId, newBusiness, setBusinesses, setNewBusiness, businesses);
     };
     
-    const handleDeleteBusiness = async (businessId) => {
-        try {
-            await axios.delete(`/api/businesses/${businessId}`);
-            setBusinesses(businesses.filter((business) => business.id !== businessId));
-            toast.success("Business deleted successfully!");
-        } catch (error) {
-            toast.error("Error deleting business.");
-        }
+    const handleEditBusiness = (id, updatedBusiness) => {
+        editBusiness(id, updatedBusiness, setBusinesses);
+    };
+    
+    const handleDeleteBusiness = (businessId) => {
+        deleteBusiness(businessId, setBusinesses, businesses);
     };
 
     const [newUser, setNewUser] = useState({
@@ -225,43 +90,12 @@ const BusinessBoard = () => {
         email: ""
     });
     
-    const createUser = async () => {
-        if (!newUser.name.trim() || !newUser.email.trim()) {
-            toast.error("Please fill in both fields.");
-            return;
-        }
-    
-        try {
-            const response = await axios.post("/api/users", newUser);
-            toast.success("Sales Representative created successfully!");
-            setUsers([...users, response.data]);
-            setNewUser({ name: "", email: "" });
-        } catch (error) {
-            toast.error("Error creating Sales Representative.");
-        }
+    const handleCreateUser = () => {
+        createUser(newUser, setUsers, setNewUser);
     };
 
-    const onDragEnd = async (result) => {
-        const { source, destination, draggableId } = result;
-        if (!destination) return;
-      
-        if (source.droppableId !== destination.droppableId) {
-          const movedBusiness = businesses.find(b => b.id.toString() === draggableId);
-          const newStateId = parseInt(destination.droppableId, 10);
-          
-          try {
-            await axios.put(`/api/businesses/${draggableId}`, {
-              ...movedBusiness,
-              state_id: newStateId,
-            });
-            setBusinesses(businesses.map(b => 
-              b.id.toString() === draggableId ? { ...b, state_id: newStateId } : b
-            ));
-            toast.success("Business moved successfully!");
-          } catch (error) {
-            toast.error("Error moving business.");
-          }
-        }
+    const onDragEnd = (result) => {
+        moveBusiness(result, businesses, setBusinesses);
     };
 
     const handleAddBusiness = (stateId) => {
@@ -288,96 +122,32 @@ const BusinessBoard = () => {
         <div className="p-6 space-y-6 bg-gray-900 min-h-screen text-gray-100">
             <ToastContainer position="top-right" autoClose={3000} />
 
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-center bg-gray-800 p-6 rounded-lg shadow-lg">
-                <h1 className="text-2xl font-bold flex items-center gap-2">
-                    <MoveRight size={28} className="text-blue-400" /> Business Board
-                </h1>
-                <div className="flex flex-col md:flex-row items-center gap-6">
-                    <p className="flex items-center gap-2 text-lg">
-                        <Users size={20} className="text-green-400" /> Total: {filteredBusinesses.length} businesses
-                    </p>
-                    <p className="flex items-center gap-2 text-lg">
-                        <DollarSign size={20} className="text-yellow-400" /> Revenue: €{totalValue.toFixed(2)}
-                    </p>
-                    <p className="flex items-center gap-2 text-lg">
-                        <DollarSign size={20} className="text-blue-400" /> Avg Business Value: €{averageBusinessValue}
-                    </p>
-                    {mostPopularState && (
-                        <p className="flex items-center gap-2 text-lg">
-                            <Award  size={20} className="text-purple-400" /> Most Businesses: {mostPopularState.name} ({mostPopularState.count})
-                        </p>
-                    )}
-                    <p className="flex items-center gap-2 text-lg">
-                        <Users size={20} className="text-cyan-400" /> Sales Representatives: {users.length}
-                    </p>
-                </div>
-            </div>
+            <Header
+                filteredBusinesses={filteredBusinesses}
+                totalValue={totalValue}
+                averageBusinessValue={averageBusinessValue}
+                mostPopularState={mostPopularState}
+                users={users}
+            />
 
-            {/* Filter by Business Type */}
-            <div className="flex flex-col gap-2 bg-gray-800 p-4 rounded-lg shadow-md mt-6">
-                <h3 className="text-xl font-semibold text-gray-100">Filter by Business Type</h3>
-                <select
-                value={filteredType || ""}
-                onChange={(e) => setFilteredType(e.target.value || null)}
-                className="p-2 rounded bg-gray-700 text-gray-200 w-full h-12"
-                >
-                <option value="">Select Business Type</option>
-                {businessTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                    {type.name}
-                    </option>
-                ))}
-                </select>
-            </div>
+            <FilterByBusinessType
+                filteredType={filteredType}
+                setFilteredType={setFilteredType}
+                businessTypes={businessTypes}
+            />
 
-            {/* Create User */}
-            <div className="bg-gray-800 p-4 rounded-lg shadow-md mt-6">
-                <h3 className="text-xl font-semibold text-gray-100 mb-2">Create Sales Representative</h3>
-                <div className="flex gap-2">
-                    <input
-                    type="text"
-                    placeholder="Sales Representative Name"
-                    value={newUser.name}
-                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                    className="p-2 rounded bg-gray-700 text-gray-200 w-full h-12"
-                    />
-                    <input
-                    type="email"
-                    placeholder="Sales Representative Email"
-                    value={newUser.email}
-                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                    className="p-2 rounded bg-gray-700 text-gray-200 w-full h-12"
-                    />
-                    <button
-                    onClick={createUser}
-                    className="bg-green-500 px-4 py-2 rounded text-white flex items-center h-12 whitespace-nowrap"
-                    >
-                    <Plus size={16} className="mr-2" /> Add Sales Representative
-                    </button>
-                </div>
-            </div>
+            <CreateUserForm
+                newUser={newUser}
+                setNewUser={setNewUser}
+                handleCreateUser={handleCreateUser}
+            />
 
-            {/* Create State */}
-            <div className="bg-gray-800 p-4 rounded-lg shadow-md mt-6">
-                <h3 className="text-xl font-semibold text-gray-100 mb-2">Create State</h3>
-                <div className="flex gap-2">
-                    <input
-                    type="text"
-                    placeholder="New State Name"
-                    value={newStateName}
-                    onChange={(e) => setNewStateName(e.target.value)}
-                    onKeyDown={handleCreateKeyPress}
-                    className="p-2 rounded bg-gray-700 text-gray-200 w-full h-12"
-                    />
-                    <button
-                    onClick={createState}
-                    className="bg-blue-500 px-4 py-2 rounded text-white flex items-center h-12 whitespace-nowrap"
-                    >
-                    <Plus size={16} className="mr-2" /> Add State
-                    </button>
-                </div>
-            </div>
+            <CreateStateForm
+                newStateName={newStateName}
+                setNewStateName={setNewStateName}
+                handleCreateKeyPress={handleCreateKeyPress}
+                handleCreateState={() => createState(newStateName, setStates, states, setNewStateName)}
+            />
 
             <div className="bg-gray-900 text-gray-100 min-h-screen">
                 <h3 className="text-2xl font-bold mb-4">Our Businesses</h3>
@@ -421,7 +191,7 @@ const BusinessBoard = () => {
                                     type="text"
                                     defaultValue={state.name}
                                     onBlur={(e) =>
-                                    !isRenaming && renameState(state.id, e.target.value, "blur")
+                                    !isRenaming && renameState(state.id, e.target.value, states, setStates, setIsRenaming)
                                     }
                                     onKeyDown={(e) =>
                                     handleRenameKeyPress(e, state.id, e.target.value)
@@ -429,7 +199,7 @@ const BusinessBoard = () => {
                                     className="text-lg font-bold text-gray-100 bg-transparent border-none outline-none w-full"
                                 />
                                 <button
-                                    onClick={() => confirmDeleteState(state.id)}
+                                    onClick={() => confirmDeleteState(state.id, setStateToDelete)}
                                     className="text-red-500"
                                 >
                                     <Trash size={16} />
@@ -464,11 +234,11 @@ const BusinessBoard = () => {
                                         {...provided.dragHandleProps}
                                     >
                                         <BusinessCard
-                                        business={business}
-                                        businessTypes={businessTypes}
-                                        users={users}
-                                        onEdit={handleEditBusiness}
-                                        onDelete={handleDeleteBusiness}
+                                            business={business}
+                                            businessTypes={businessTypes}
+                                            users={users}
+                                            onEdit={handleEditBusiness}
+                                            onDelete={handleDeleteBusiness}
                                         />
                                     </div>
                                     )}
@@ -561,7 +331,7 @@ const BusinessBoard = () => {
                         </button>
                         <button
                             className="px-4 py-2 bg-red-500 rounded"
-                            onClick={deleteState}
+                            onClick={() => deleteState(stateToDelete, setStateToDelete, setStates, states)}
                         >
                             Delete
                         </button>
