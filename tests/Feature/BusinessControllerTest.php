@@ -9,21 +9,31 @@ use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
+
+/**
+ * BusinessControllerTest - Tests the BusinessController endpoints.
+ */
 class BusinessControllerTest extends TestCase
 {
+    /**
+     * Test creating a business.
+     * This verifies that a business can be created successfully via the API.
+     */
     public function test_can_create_business()
     {
-        Log::info('Iniciando teste: Criar Business');
+        Log::info('Starting test: Create Business');
 
+        // Creating related entities
         $businessType = BusinessType::factory()->create();
-        Log::info('BusinessType criado', ['id' => $businessType->id]);
+        Log::info('BusinessType created successfully', ['id' => $businessType->id]);
 
         $user = User::factory()->create();
-        Log::info('User criado', ['id' => $user->id]);
+        Log::info('User created successfully', ['id' => $user->id]);
 
         $state = State::factory()->create();
-        Log::info('State criado', ['id' => $state->id]);
+        Log::info('State created successfully', ['id' => $state->id]);
 
+        // Business creation payload
         $payload = [
             'name' => 'Test Business',
             'business_type_id' => $businessType->id,
@@ -32,55 +42,73 @@ class BusinessControllerTest extends TestCase
             'value' => 1000
         ];
 
-        Log::info('📤 Enviando requisição para criar Business', $payload);
+        Log::info('Sending request to create Business', $payload);
         $response = $this->postJson('/api/businesses', $payload);
 
-        // Depuração (Descomentar se quiser ver a resposta no terminal)
+        // Uncomment to debug response
         // dd($response->json());
 
+        // Asserting the response status
         $response->assertStatus(201);
-        Log::info('Business criado com sucesso', ['response' => $response->json()]);
+        Log::info('Business successfully created', ['response' => $response->json()]);
 
+        // Verifying the business exists in the database
         $this->assertDatabaseHas('businesses', ['name' => 'Test Business']);
-        Log::info('O Business está presente na base de dados');
+        Log::info('Business is present in the database');
     }
 
+    /**
+     * Test updating a business.
+     * This verifies that a business can be updated successfully via the API.
+     */
     public function test_can_update_business()
     {
-        Log::info('Iniciando teste: Atualizar Business');
+        Log::info('Starting test: Update Business');
 
+        // Creating a business to update
         $business = Business::factory()->create();
-        Log::info('Business original criado', ['id' => $business->id]);
+        Log::info('Original Business created successfully', ['id' => $business->id]);
 
+        // Creating a new state to update the business with
         $newState = State::factory()->create();
-        Log::info('Novo State criado', ['id' => $newState->id]);
+        Log::info('New State created successfully', ['id' => $newState->id]);
 
+        // Update payload
         $payload = ['state_id' => $newState->id];
 
-        Log::info('Enviando requisição para atualizar Business', ['business_id' => $business->id, 'payload' => $payload]);
+        Log::info('Sending request to update Business', ['business_id' => $business->id, 'payload' => $payload]);
         $response = $this->putJson("/api/businesses/{$business->id}", $payload);
 
+        // Asserting the response status
         $response->assertStatus(200);
-        Log::info('Business atualizado com sucesso', ['response' => $response->json()]);
+        Log::info('Business successfully updated', ['response' => $response->json()]);
 
+        // Verifying the update in the database
         $this->assertDatabaseHas('businesses', ['id' => $business->id, 'state_id' => $newState->id]);
-        Log::info('A atualização foi refletida na base de dados');
+        Log::info('Update successfully reflected in the database');
     }
 
+    /**
+     * Test deleting a business.
+     * This verifies that a business can be deleted successfully via the API.
+     */
     public function test_can_delete_business()
     {
-        Log::info('Iniciando teste: Deletar Business');
+        Log::info('Starting test: Delete Business');
 
+        // Creating a business to delete
         $business = Business::factory()->create();
-        Log::info('Business criado', ['id' => $business->id]);
+        Log::info('Business created successfully', ['id' => $business->id]);
 
-        Log::info('Enviando requisição para deletar Business', ['business_id' => $business->id]);
+        Log::info('Sending request to delete Business', ['business_id' => $business->id]);
         $response = $this->deleteJson("/api/businesses/{$business->id}");
 
+        // Asserting the response status
         $response->assertStatus(200);
-        Log::info('Business deletado com sucesso');
+        Log::info('Business successfully deleted');
 
+        // Verifying the business is no longer in the database
         $this->assertDatabaseMissing('businesses', ['id' => $business->id]);
-        Log::info('O Business não está mais na base de dados');
+        Log::info('Business has been removed from the database');
     }
 }

@@ -8,8 +8,12 @@ use Illuminate\Database\Seeder;
 
 class BusinessTypeSeeder extends Seeder
 {
+    /**
+     * Seed the 'business_types' table with predefined categories.
+     */
     public function run(): void
     {
+        // List of predefined business types
         $businessTypes = [
             'Technology',
             'Retail',
@@ -23,6 +27,7 @@ class BusinessTypeSeeder extends Seeder
             'Real Estate'
         ];
 
+        // Insert each business type into the database
         foreach ($businessTypes as $type) {
             BusinessType::create(['name' => $type]);
         }

@@ -7,60 +7,81 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
+/**
+ * UserControllerTest - Tests the UserController endpoints.
+ */
 class UserControllerTest extends TestCase
 {
+    /**
+     * UserControllerTest - Tests the UserController endpoints.
+     */
     public function test_can_create_user()
     {
-        Log::info('Iniciando teste: Criar User');
+        Log::info('Starting test: Create User');
 
+        // Fake email sending to avoid sending real emails during tests
         Mail::fake();
-        Log::info('Simulação de envio de email ativada');
+        Log::info('Email sending simulation activated');
 
+        // Ensure no duplicate users exist before testing
         User::where('email', 'john@example.com')->delete();
-        Log::info('Removido qualquer User existente com email john@example.com');
+        Log::info('Removed any existing user with email john@example.com');
 
+        // Payload for user creation
         $payload = [
             'name' => 'John Doe',
             'email' => 'john@example.com'
         ];
 
-        Log::info('Enviando requisição para criar User', $payload);
+        Log::info('Sending request to create User', $payload);
         $response = $this->postJson('/api/users', $payload);
 
+        // Log error if request fails
         if ($response->status() !== 201) {
-            Log::error('Erro ao criar User', ['response' => $response->json()]);
+            Log::error('Error creating User', ['response' => $response->json()]);
         }
 
+        // Assert response status
         $response->assertStatus(201);
-        Log::info('User criado com sucesso', ['response' => $response->json()]);
+        Log::info('User successfully created', ['response' => $response->json()]);
 
+        // Verify the user exists in the database
         $this->assertDatabaseHas('users', ['email' => 'john@example.com']);
-        Log::info('Verificação concluída: O User está na base de dados');
+        Log::info('Verification complete: User is present in the database');
     }
 
+    /**
+     * Test that a duplicate user cannot be created.
+     * This ensures that the system prevents duplicate user registrations.
+     */
     public function test_cannot_create_duplicate_user()
     {
-        Log::info('Iniciando teste: Impedir criação de User duplicado');
+        Log::info('Starting test: Prevent duplicate User creation');
 
+        // Remove existing user to avoid conflicts
         User::where('email', 'john@example.com')->delete();
-        Log::info('Utilizador anterior com email john@example.com removido');
+        Log::info('Removed any previous user with email john@example.com');
 
+        // Create an initial user
         User::factory()->create(['email' => 'john@example.com']);
-        Log::info('User original criado', ['email' => 'john@example.com']);
+        Log::info('Original user created', ['email' => 'john@example.com']);
 
+        // Attempt to create a duplicate user
         $payload = [
             'name' => 'John Doe',
             'email' => 'john@example.com'
         ];
 
-        Log::info('Enviando requisição para criar User duplicado', $payload);
+        Log::info('Sending request to create duplicate User', $payload);
         $response = $this->postJson('/api/users', $payload);
 
+        // Log error if the system allows duplicate users
         if ($response->status() !== 422) {
-            Log::error('O sistema permitiu a criação de um User duplicado', ['response' => $response->json()]);
+            Log::error('The system allowed duplicate User creation', ['response' => $response->json()]);
         }
 
+        // Assert response status
         $response->assertStatus(422);
-        Log::info('A criação do User duplicado foi impedida corretamente');
+        Log::info('Duplicate User creation was correctly prevented');
     }
 }

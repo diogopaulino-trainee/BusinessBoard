@@ -11,12 +11,12 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
-        @routes
-        @viteReactRefresh
-        @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
-        @inertiaHead
+        @routes     <!-- Generates JavaScript routes for Laravel -->
+        @viteReactRefresh       <!-- Enables React Fast Refresh for hot reloading -->
+        @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])      <!-- Loads the main React scripts -->
+        @inertiaHead    <!-- Adds Inertia.js metadata to the head -->
     </head>
     <body class="font-sans antialiased">
-        @inertia
+        @inertia    <!-- Inertia.js root component for handling frontend navigation -->
     </body>
 </html>
